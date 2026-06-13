@@ -1,0 +1,5 @@
+# Список разрешённых пользователей Telegram (без @)
+# По одному username на строку
+# Пример:
+# your_username
+# another_user

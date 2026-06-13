@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  xray:
+    image: teddysun/xray
+    container_name: xray-proxy
+    restart: unless-stopped
+    network_mode: "host"
+    volumes:
+      - ./xray/config.json:/etc/xray/config.json:ro
+
+  wg-bot:
+    build: .
+    container_name: wg-bot
+    restart: unless-stopped
+    network_mode: "host"
+    privileged: true
+    depends_on:
+      - xray
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - WG_API_BASE=${WG_API_BASE:-http://127.0.0.1:51821/api}
+      - WG_PASSWORD=${WG_PASSWORD}
+      - MAX_CONFIGS_PER_USER=${MAX_CONFIGS_PER_USER:-4}
+      - WEBHOOK_URL=${WEBHOOK_URL:-}
+      - WEBHOOK_PORT=${WEBHOOK_PORT:-8443}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET:-}
+
+      - HTTP_PROXY=http://127.0.0.1:1081
+      - HTTPS_PROXY=http://127.0.0.1:1081
+      - NO_PROXY=127.0.0.1,localhost,10.2.0.0/24,10.30.0.0/24
+
+    volumes:
+      - ./bot_api.py:/app/bot_api.py:ro
+      - ./allowed_users.txt:/app/allowed_users.txt
+      - ./unlimited_users.txt:/app/unlimited_users.txt
+      - ./subscribers.txt:/app/subscribers.txt
+      - ./requirements.txt:/app/requirements.txt:ro
+      - ./image.png:/app/image.png:ro
+      - /etc/wireguard:/etc/wireguard
+
+    working_dir: /app
+    command: ["python3", "bot_api.py"]
